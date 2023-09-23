@@ -1,0 +1,233 @@
+// ------------------------------------------------------------
+// Toxic Gas Grenade
+// ------------------------------------------------------------
+const HDLD_GRE_FLASH="flb";
+const ENC_FLASHBANG=ENC_FRAG*0.65;
+
+class HDFlashbangs:HDGrenadethrower{
+	default{
+		weapon.selectionorder 10;
+		weapon.slotpriority 1.125;
+		weapon.slotnumber 0;
+		tag "Flash Grenade";
+		hdgrenadethrower.ammotype "HDFlashbangAmmo";
+		hdgrenadethrower.throwtype "HDFlashbangThrown";
+		hdgrenadethrower.spoontype "HDFlashbangSpoon";
+		hdgrenadethrower.wiretype "FlashTripwireFrag";
+		inventory.icon "FBG2A0";
+	}
+
+	override string gethelptext(){
+		if(weaponstatus[0]&FRAGF_SPOONOFF)return
+		WEPHELP_FIRE.."  Wind up, release to throw\n(\cxSTOP READING AND DO THIS"..WEPHELP_RGCOL..")";
+		return
+		WEPHELP_FIRE.."  Pull pin/wind up (release to throw)\n"
+		..WEPHELP_ALTFIRE.."  Pull pin, again to drop spoon\n"
+		..WEPHELP_RELOAD.."  Abort/replace pin\n"
+		..WEPHELP_ZOOM.."  Start planting tripwire traps"
+		;
+	}
+	
+	override void DoEffect(){
+		if(weaponstatus[0]&FRAGF_SPOONOFF){
+			weaponstatus[FRAGS_TIMER]++;
+			if(
+				owner.health<1
+				||weaponstatus[FRAGS_TIMER]>51
+			)TossGrenade(true);
+		}else if(
+			weaponstatus[0]&FRAGF_INHAND
+			&&weaponstatus[0]&FRAGF_PINOUT
+			&&owner.player.cmd.buttons&BT_ATTACK
+			&&owner.player.cmd.buttons&BT_ALTFIRE
+			&&!(owner.player.oldbuttons&BT_ALTFIRE)
+		){
+			StartCooking();
+		}
+		hdweapon.doeffect();
+	}
+	
+	override string,double getpickupsprite(){return "FBG2A0",0.7;}
+	override void DrawHUDStuff(HDStatusBar sb,HDWeapon hdw,HDPlayerPawn hpl){
+		if(sb.hudlevel==1){
+			sb.drawimage(
+				(weaponstatus[0]&FRAGF_PINOUT)?"FBG2B0":"FBG2A0",
+				(-52,-4),sb.DI_SCREEN_CENTER_BOTTOM,scale:(0.7,0.7)
+			);
+			sb.drawnum(hpl.countinv("HDFlashbangAmmo"),-45,-8,sb.DI_SCREEN_CENTER_BOTTOM);
+		}
+		sb.drawwepnum(
+			hpl.countinv("HDFlashbangAmmo"),
+			(HDCONST_MAXPOCKETSPACE/ENC_FRAG)
+		);
+		sb.drawwepnum(hdw.weaponstatus[FRAGS_FORCE],50,posy:-10,alwaysprecise:true);
+		if(!(hdw.weaponstatus[0]&FRAGF_SPOONOFF)){
+			sb.drawrect(-21,-19,5,4);
+			if(!(hdw.weaponstatus[0]&FRAGF_PINOUT))sb.drawrect(-25,-18,3,2);
+		}else{
+			int timer=hdw.weaponstatus[FRAGS_TIMER];
+			if(timer%3)sb.drawwepnum(55-timer,55,posy:-15,alwaysprecise:true);
+		}
+	}
+	
+	override void ForceBasicAmmo(){
+		owner.A_SetInventory("HDFlashbangAmmo",1);
+	}
+	
+	states
+	{
+		deselectinstant:
+			TNT1 A -1 A_TakeInventory("HDFlashbangs", 1);
+			stop;
+	}
+}
+
+class FlashTripwireFrag:Tripwire{
+	default{
+		weapon.selectionorder 1021;
+		tripwire.ammotype "HDFlashbangAmmo";
+		tripwire.throwtype "FlashTrippingFrag";
+		tripwire.spoontype "HDFlashbangSpoon";
+		tripwire.weptype "HDFlashbangs";
+	}
+	override void DrawHUDStuff(HDStatusBar sb,HDWeapon hdw,HDPlayerPawn hpl){
+		if(sb.hudlevel==1){
+			sb.drawimage("FBG2A0",(-52,-4),sb.DI_SCREEN_CENTER_BOTTOM,scale:(0.7,0.7));
+			sb.drawnum(hpl.countinv("HDFlashbangAmmo"),-45,-8,sb.DI_SCREEN_CENTER_BOTTOM);
+		}
+		sb.drawwepnum(
+			hpl.countinv("HDFlashbangAmmo"),
+			(ENC_FRAG/HDCONST_MAXPOCKETSPACE)
+		);
+		sb.drawwepnum(hdw.weaponstatus[FRAGS_FORCE],50,posy:-10,alwaysprecise:true);
+		if(!(hdw.weaponstatus[0]&FRAGF_SPOONOFF)){
+			sb.drawrect(-21,-19,5,4);
+			if(!(hdw.weaponstatus[0]&FRAGF_PINOUT))sb.drawrect(-25,-18,3,2);
+		}else{
+			int timer=hdw.weaponstatus[FRAGS_TIMER];
+			if(timer%3)sb.drawwepnum(55-timer,55,posy:-15,alwaysprecise:true);
+		}
+	}
+}
+
+class HDFlashbang:HDFragGrenade{
+	default{
+		+ROLLSPRITE
+		+ROLLCENTER
+		scale 0.23;
+		obituary "%o was smoked by %k.";
+		hdfraggrenade.rollertype "HDFlashbangRoller";
+	}
+	states
+	{
+	spawn:
+		FBG3 ABCDEFGH 2 A_SetRoll(frandom(-15.5, 15.5));
+		loop;
+	}
+}
+
+class FlashTrippingFrag:TrippingGrenade{
+	default{
+		//$Category "Misc/Hideous Destructor/Traps"
+		//$Title "Tripwire Grenade"
+		//$Sprite "FRAGA0"
+
+		scale 0.23;
+		trippinggrenade.rollertype "HDFlashbangRoller";
+		trippinggrenade.spoontype "HDFlashbangSpoon";
+		trippinggrenade.droptype "HDFlashbangAmmo";
+		hdupk.pickuptype "HDFlashbangAmmo";
+	}
+	override void postbeginplay(){
+		super.postbeginplay();
+		pickupmessage=getdefaultbytype("HDFlashbangAmmo").pickupmessage();
+	}
+	states{
+	spawn:
+		FBG2 A 1 nodelay A_TrackStuckHeight();
+		wait;
+	}
+}
+
+class HDFlashbangAmmo:HDAmmo{
+	default{
+		//+forcexybillboard
+		inventory.icon "FBG2A0";
+		inventory.amount 1;
+		scale 0.23;
+		inventory.maxamount 50;
+		inventory.pickupmessage "Picked up a Flash Grenade.";
+		inventory.pickupsound "weapons/pocket";
+		tag "Flash Grenades";
+		hdpickup.refid HDLD_GRE_FLASH;
+		hdpickup.bulk ENC_Flashbang;
+		+INVENTORY.KEEPDEPLETED
+	}
+	override bool IsUsed(){return true;}
+	override void AttachToOwner(Actor user)
+	{
+		user.GiveInventory("HDFlashbangs", 1);
+		super.AttachToOwner(user);
+	}
+	override void DetachFromOwner()
+	{
+		if(!(owner.player.ReadyWeapon is "HDFlashbangs"))
+		{
+			TakeInventory("HDFlashbangs", 1);
+		}
+		super.DetachFromOwner();
+	}
+	states{
+	spawn:
+		FBG2 A -1;stop;
+	}
+}
+
+class HDFlashbangP:HDUPK{
+	default{
+		//+forceybillboard
+		scale 0.23;height 3;radius 3;
+		hdupk.amount 1;
+		hdupk.pickuptype "HDFlashbangAmmo";
+		hdupk.pickupmessage "Picked up a Flash Grenade.";
+		hdupk.pickupsound "weapons/rifleclick2";
+		stamina 1;
+	}
+	override void postbeginplay(){
+		super.postbeginplay();
+		pickupmessage=getdefaultbytype(pickuptype).pickupmessage();
+	}
+	states{
+	spawn:
+		FBG2 A -1;stop;
+	}
+}
+
+class HDFlashbangPickup:HDFlashbangP{
+	override void postbeginplay(){
+		super.postbeginplay();
+		A_SpawnItemEx("HDFlashbangP",-4,0,flags:SXF_NOCHECKPOSITION);
+		A_SpawnItemEx("HDFlashbangP",-4,4,flags:SXF_NOCHECKPOSITION);
+		A_SpawnItemEx("HDFlashbangP",0,4,flags:SXF_NOCHECKPOSITION);
+		A_SpawnItemEx("HDFlashbangP",4,0,flags:SXF_NOCHECKPOSITION);
+		A_SpawnItemEx("HDFlashbangP",4,4,flags:SXF_NOCHECKPOSITION);
+	}
+}
+
+
+class HDFlashbangSpoon:HDDebris{
+	default{
+		scale 0.23;bouncefactor 0.6;
+		bouncesound "misc/casing4";
+	}
+	override void postbeginplay(){
+		super.postbeginplay();
+		A_StartSound("weapons/grenopen",CHAN_VOICE);
+	}
+	states{
+	spawn:
+		FBG2 C 2{roll+=40;}wait;
+	death:
+		FBG2 C -1;
+	}
+}

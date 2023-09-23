@@ -1,0 +1,31 @@
+version "4.10"
+
+//Main
+#include "ZScript/Flashbang_Projectile.zsc"
+#include "ZScript/BangWeapon.zsc"
+
+
+class PB_Flashbang_Spawner : EventHandler
+{
+override void CheckReplacement(ReplaceEvent e) {
+	if (!PB_HDWeps_AllowReplacement)
+		return;
+	switch (e.Replacee.GetClassName()) {
+	
+	
+	//bonus items
+		case 'HelmFrag' :
+		case 'BlueFrag' :
+			if (!random(0, 24)) {e.Replacement = "HDFlashbangP";}	
+			
+			break;
+	//mass spawn
+		case 'RocketBoxRandom' :
+		case 'BlurSphereReplacer' :
+			if (!random(0, 12)) {e.Replacement = "HDFlashbangPickup";}	
+			
+			break;
+		}
+	e.IsFinal = false;
+	}
+}

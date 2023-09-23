@@ -1,0 +1,3 @@
+pb/flashbang/explode	"Sounds/FlashbangExp1.ogg"
+$limit pb/flashbang/explode 0
+$pitchset pb/flashbang/explode 1.0
