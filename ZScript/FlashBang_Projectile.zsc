@@ -2,7 +2,7 @@
 
 //GRENADE
 const FLASHBANG_STUNAMT=196;
-const FLASHBANG_DIST=384
+const FLASHBANG_DIST=384;
 
 class HDFlashbangRoller:HDFragGrenadeRoller{
 	//int fuze;
