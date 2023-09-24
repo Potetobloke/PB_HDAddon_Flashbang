@@ -77,101 +77,11 @@ class HDFlashbangRoller:HDFragGrenadeRoller{
 			
 			if(popped<=0){
 
-				let fls=spawn("HDFlashbangBang",pos);
-					fls.target=self;
 				popped++;
 				vel.z++;
-			}
-				
-				if(CheckNoDelay()){
-					if(tics>0)tics--;  
-					while(!tics){
-						if(!SetState(CurState.NextState)){
-							return;
-						}
-					}
-				}
-				return;
-			}else hdactor.tick();
-		}
-	}
-}
-
-class HDFlashbangThrown:HDFragGrenade{
-
-	int popped;
 	
-	default{
-		+ROLLSPRITE
-		+ROLLCENTER
-		scale 0.23;
-		obituary "%o was flashed by %k.";
-		hdfraggrenade.rollertype "HDFlashbangRoller";
-		mass 25;
-	}
-	
-	override void tick(){ //not redefining this causes a crash
-		ClearInterpolation();
-		if(isfrozen())return;
-		if(!bmissile){
-			hdactor.tick();return;
-		}else if(fuze<55){
-			fuze++;
-			keeprolling=vel;
-			hdactor.tick(); 
-			
-		}else{
-			if(inthesky){
-				A_SpawnChunksFrags();
-				destroy();return;
-			}
-			
-			keeprolling=vel;
-			hdactor.tick();
-			
-			if(popped<=0){
-			
-				popped++;
-				vel.z++;
-				
-				let fls=spawn("HDFlashbangBang",pos);
-					//fls.target=self;
-			}
-		}
-	}
-	
-	states
-	{
-	spawn:
-		FBG3 ABCDEFGH 2 A_SetRoll(frandom(-15.5, 15.5));
-		loop;
-		
-	death:
-		TNT1 A 2{
-			bmissile=false;
-			let fbn=HDFlashbangRoller(spawn(rollertype,self.pos,ALLOW_REPLACE));
-			if(!fbn)return;
-			fbn.target=self.target;fbn.master=self.master;
-			fbn.fuze=self.fuze;
-			fbn.popped=self.popped;
-			fbn.vel=self.keeprolling;
-			fbn.keeprolling=self.keeprolling;
-			fbn.A_StartSound("misc/fragknock",CHAN_BODY);
-			//HDMobAI.Frighten(fbn,FLASHBANG_DIST);
-		}stop;
-	}
-}
+			//start of boom
 
-class HDFlashbangBang:IdleDummy{
-	default{
-		+forcexybillboard +bright
-	}
-	states{
-	spawn:
-	death:
-		TNT1 A 1 nodelay
-		{
-		
 			A_StartSound("pb/flashbang/explode",CHAN_7,CHANF_OVERLAP,0.95,0.65);
 			A_HDBlast(FLASHBANG_DIST,2,FLASHBANG_DIST/2,"bashing",8,8);
 			A_AlertMonsters(1024);
@@ -273,7 +183,309 @@ class HDFlashbangBang:IdleDummy{
 						}
 					}
 				}
+				
+				//end of boom
+				
+			}
+				
+				if(CheckNoDelay()){
+					if(tics>0)tics--;  
+					while(!tics){
+						if(!SetState(CurState.NextState)){
+							return;
+						}
+					}
+				}
+				return;
+			}else hdactor.tick();
 		}
+	}
+}
+
+class HDFlashbangThrown:HDFragGrenade{
+
+	int popped;
+	
+	default{
+		+ROLLSPRITE
+		+ROLLCENTER
+		scale 0.23;
+		obituary "%o was flashed by %k.";
+		hdfraggrenade.rollertype "HDFlashbangRoller";
+		mass 25;
+	}
+	
+	override void tick(){ //not redefining this causes a crash
+		ClearInterpolation();
+		if(isfrozen())return;
+		if(!bmissile){
+			hdactor.tick();return;
+		}else if(fuze<55){
+			fuze++;
+			keeprolling=vel;
+			hdactor.tick(); 
+			
+		}else{
+			if(inthesky){
+				A_SpawnChunksFrags();
+				destroy();return;
+			}
+			
+			keeprolling=vel;
+			hdactor.tick();
+			
+			if(popped<=0){
+			
+				popped++;
+				vel.z++;
+			
+			//start of boom
+			
+			A_StartSound("pb/flashbang/explode",CHAN_7,CHANF_OVERLAP,0.95,0.65);
+			A_HDBlast(FLASHBANG_DIST,2,FLASHBANG_DIST/2,"bashing",8,8);
+			A_AlertMonsters(1024);
+			
+			for(int i=0;i<6;i++){
+					let fls=spawn("HDFlashbangLight",pos);
+					fls.target=self;
+					let smk=spawn("HDFlashbangSmoke",pos);
+					smk.scale.x=2.5;smk.scale.y=2.5;
+				}
+				
+			for(int i=0;i<64;i++){
+			A_SpawnParticle("ff fe a8",
+				SPF_RELATIVE,frandom(3,5),frandom(4,7),0,
+				frandom(-3,3),frandom(-3,3),frandom(0,4),
+				frandom(-64,64),frandom(-64,64),vel.z+frandom(-64,64),
+				frandom(-0.1,0.1),frandom(-0.1,0.1),-HDCONST_GRAVITY
+			);
+			}
+			
+			For(let ccc = BlockThingsIterator.Create(self,FLASHBANG_DIST); ccc.Next();){
+					If(!ccc.thing||Distance3D(ccc.thing)>FLASHBANG_DIST||!ccc.thing.CheckSight(self)){Continue;}
+					
+					//this shit has caused me a headache
+					//thank you renegade4339 for solving this issue
+					let plr = HDPlayerPawn(ccc.thing);
+					let mob = HDMobBase(ccc.thing);
+					
+					If(ccc.thing.bISMONSTER&&ccc.thing.health>0)
+					{
+						let mob = HDMobBase(ccc.thing);
+						
+						If(ccc.thing is "HDMobBase")
+						{
+							target=mob;
+							If(ccc.thing.FindState("Pain")
+							&&!mob.InStateSequence(mob.CurState,mob.ResolveState("falldown")))
+							mob.stunned+=FLASHBANG_STUNAMT;	
+							
+							//Extra Use Cases
+							If(ccc.thing is "PainMonster"||ccc.thing is "CombatSlug"||ccc.thing is "Technorantula")
+							{
+								target=mob;
+								mob.stunned+=FLASHBANG_STUNAMT*2.1; //fuck you in particular!!!!
+								mob.tics=frandom(48,64);
+								mob.A_HDChase();
+								mob.target=null;
+								mob.A_Pain();
+								mob.A_SetAngle(mob.angle+frandom[flashx](-45,45));
+								mob.A_SetPitch(mob.pitch+frandom[flashy](-45,45));
+							}
+							
+							If(ccc.thing is "VulcanetteZombie")
+							{
+								let vlc = VulcanetteZombie(ccc.thing);
+								target=mob;
+								vlc.tics=frandom(12,14);
+								vlc.A_Pain();
+								if (random(0, 1))
+								{
+									vlc.A_HDChase();
+									vlc.SetStateLabel("shoot");
+									vlc.burstcount=frandom(13,30);
+									mob.A_SetAngle(mob.angle+frandom[flashx](-45,45));
+									
+									if (random(0, 3)){vlc.superauto=true;}
+								}
+							}
+							
+							If(ccc.thing is "Babuin")
+							{
+								let bab = Babuin(ccc.thing);
+								target=mob;
+								bab.SetStateLabel("Pain");
+								mob.tics=frandom(16,21);
+								mob.A_Pain();
+								bab.latchtarget=null;
+								bab.stunned+=FLASHBANG_STUNAMT*1.5;
+								bab.target=null;
+							}
+						}
+						
+					}
+					
+					Else If(ccc.thing is "HDPlayerPawn"){
+						target=plr;
+						//plr.A_StartSound("world/rocketfar",300,CHANF_LOCAL,pitch:0.5);
+					
+						If(CheckIfInTargetLOS(135)){
+							plr.A_SetBlend("00 00 00",1,192,"00 00 00",0);
+							plr.A_SetBlend("ff ff ff",0.5,2,"ff ff ff",0.0);
+							plr.A_SetAngle(plr.angle+frandom[flashx](-15,15));
+							plr.A_SetPitch(plr.pitch+frandom[flashy](-15,15));
+							plr.stunned+=128;
+						}else
+						{
+							plr.A_SetBlend("00 00 00",0.3,32,"00 00 00",0);
+							plr.stunned+=8;
+						}
+					}
+				}
+				
+				//end of boom
+				
+			}
+		}
+	}
+	
+	states
+	{
+	spawn:
+		FBG3 ABCDEFGH 2 A_SetRoll(frandom(-15.5, 15.5));
+		loop;
+		
+	death:
+		TNT1 A 2{
+			bmissile=false;
+			let fbn=HDFlashbangRoller(spawn(rollertype,self.pos,ALLOW_REPLACE));
+			if(!fbn)return;
+			fbn.target=self.target;fbn.master=self.master;
+			fbn.fuze=self.fuze;
+			fbn.popped=self.popped;
+			fbn.vel=self.keeprolling;
+			fbn.keeprolling=self.keeprolling;
+			fbn.A_StartSound("misc/fragknock",CHAN_BODY);
+			//HDMobAI.Frighten(fbn,FLASHBANG_DIST);
+		}stop;
+	}
+}
+
+class HDFlashbangBang:HDActor{
+	default{
+		+forcexybillboard +bright
+	}
+	
+	override void PostBeginPlay()
+	{
+			A_StartSound("pb/flashbang/explode",CHAN_7,CHANF_OVERLAP,0.95,0.65);
+			A_HDBlast(FLASHBANG_DIST,2,FLASHBANG_DIST/2,"bashing",8,8);
+			A_AlertMonsters(1024);
+			
+			for(int i=0;i<6;i++){
+					let fls=spawn("HDFlashbangLight",pos);
+					fls.target=self;
+					let smk=spawn("HDFlashbangSmoke",pos);
+					smk.scale.x=2.5;smk.scale.y=2.5;
+				}
+				
+			for(int i=0;i<64;i++){
+			A_SpawnParticle("ff fe a8",
+				SPF_RELATIVE,frandom(3,5),frandom(4,7),0,
+				frandom(-3,3),frandom(-3,3),frandom(0,4),
+				frandom(-64,64),frandom(-64,64),vel.z+frandom(-64,64),
+				frandom(-0.1,0.1),frandom(-0.1,0.1),-HDCONST_GRAVITY
+			);
+			}
+			
+				For(let ccc = BlockThingsIterator.Create(self,FLASHBANG_DIST); ccc.Next();){
+					If(!ccc.thing||Distance3D(ccc.thing)>FLASHBANG_DIST||!ccc.thing.CheckSight(self)){Continue;}
+					
+					//this shit has caused me a headache
+					//thank you renegade4339 for solving this issue
+					let plr = HDPlayerPawn(ccc.thing);
+					let mob = HDMobBase(ccc.thing);
+					
+					If(ccc.thing.bISMONSTER&&ccc.thing.health>0)
+					{
+						let mob = HDMobBase(ccc.thing);
+						
+						If(ccc.thing is "HDMobBase")
+						{
+							target=mob;
+							If(ccc.thing.FindState("Pain")
+							&&!mob.InStateSequence(mob.CurState,mob.ResolveState("falldown")))
+							mob.stunned+=FLASHBANG_STUNAMT;	
+							
+							//Extra Use Cases
+							If(ccc.thing is "PainMonster"||ccc.thing is "CombatSlug"||ccc.thing is "Technorantula")
+							{
+								target=mob;
+								mob.stunned+=FLASHBANG_STUNAMT*2.1; //fuck you in particular!!!!
+								mob.tics=frandom(48,64);
+								mob.A_HDChase();
+								mob.target=null;
+								mob.A_Pain();
+								mob.A_SetAngle(mob.angle+frandom[flashx](-45,45));
+								mob.A_SetPitch(mob.pitch+frandom[flashy](-45,45));
+							}
+							
+							If(ccc.thing is "VulcanetteZombie")
+							{
+								let vlc = VulcanetteZombie(ccc.thing);
+								target=mob;
+								vlc.tics=frandom(12,14);
+								vlc.A_Pain();
+								if (random(0, 1))
+								{
+									vlc.A_HDChase();
+									vlc.SetStateLabel("shoot");
+									vlc.burstcount=frandom(13,30);
+									mob.A_SetAngle(mob.angle+frandom[flashx](-45,45));
+									
+									if (random(0, 3)){vlc.superauto=true;}
+								}
+							}
+							
+							If(ccc.thing is "Babuin")
+							{
+								let bab = Babuin(ccc.thing);
+								target=mob;
+								bab.SetStateLabel("Pain");
+								mob.tics=frandom(16,21);
+								mob.A_Pain();
+								bab.latchtarget=null;
+								bab.stunned+=FLASHBANG_STUNAMT*1.5;
+								bab.target=null;
+							}
+						}
+						
+					}
+					
+					Else If(ccc.thing is "HDPlayerPawn"){
+						target=plr;
+						//plr.A_StartSound("world/rocketfar",300,CHANF_LOCAL,pitch:0.5);
+					
+						If(CheckIfInTargetLOS(135)){
+							plr.A_SetBlend("00 00 00",1,192,"00 00 00",0);
+							plr.A_SetBlend("ff ff ff",0.5,2,"ff ff ff",0.0);
+							plr.A_SetAngle(plr.angle+frandom[flashx](-15,15));
+							plr.A_SetPitch(plr.pitch+frandom[flashy](-15,15));
+							plr.stunned+=128;
+						}else
+						{
+							plr.A_SetBlend("00 00 00",0.3,32,"00 00 00",0);
+							plr.stunned+=8;
+						}
+					}
+				}
+			super.postbeginplay();
+	}
+	
+	states{
+	spawn:
+		TNT1 A 0 nodelay;
+		TNT1 A 5; //FlashbangExp();
 		stop;
 	}
 }
