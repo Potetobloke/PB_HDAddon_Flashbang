@@ -158,7 +158,7 @@ class HDFlashbangAmmo:HDAmmo{
 		inventory.maxamount 50;
 		inventory.pickupmessage "Picked up a Flash Grenade.";
 		inventory.pickupsound "weapons/pocket";
-		tag "Flash Grenades";
+		tag "Flash Grenade";
 		hdpickup.refid HDLD_GRE_FLASH;
 		hdpickup.bulk ENC_Flashbang;
 		+INVENTORY.KEEPDEPLETED
