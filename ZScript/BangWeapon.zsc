@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Toxic Gas Grenade
+// Flashbang
 // ------------------------------------------------------------
 const HDLD_GRE_FLASH="flb";
 const ENC_FLASHBANG=ENC_FRAG*0.65;
