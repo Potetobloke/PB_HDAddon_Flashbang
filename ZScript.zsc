@@ -8,7 +8,7 @@ version "4.10"
 class PB_Flashbang_Spawner : EventHandler
 {
 override void CheckReplacement(ReplaceEvent e) {
-	if (!PB_HDWeps_AllowReplacement)
+	if (!PB_Flashbang_Spawns)
 		return;
 	switch (e.Replacee.GetClassName()) {
 	
