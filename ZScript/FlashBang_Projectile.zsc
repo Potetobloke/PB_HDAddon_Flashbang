@@ -2,7 +2,7 @@
 
 //GRENADE
 const FLASHBANG_STUNAMT=196;
-const FLASHBANG_DIST=451;
+const FLASHBANG_DIST=512;
 
 class HDFlashbangRoller:HDFragGrenadeRoller{
 	//int fuze;
@@ -135,7 +135,8 @@ class HDFlashbangRoller:HDFragGrenadeRoller{
 							
 							{ccc.thing.SetStateLabel("Pain");}
 							
-							mob.stunned+=FLASHBANG_STUNAMT;	
+							mob.stunned+=FLASHBANG_STUNAMT;
+							mob.target=null;
 							
 							//Extra Use Cases
 							If(ccc.thing is "PainMonster"||ccc.thing is "CombatSlug"||ccc.thing is "Technorantula")
@@ -194,8 +195,8 @@ class HDFlashbangRoller:HDFragGrenadeRoller{
 							plr.stunned+=128;
 						}else
 						{
-							plr.A_SetBlend("00 00 00",0.3,32,"00 00 00",0);
-							plr.stunned+=8;
+							//plr.A_SetBlend("00 00 00",0.3,32,"00 00 00",0);
+							//plr.stunned+=8;
 						}
 					}
 				}
@@ -254,7 +255,6 @@ class HDFlashbangThrown:HDFragGrenade{
 				A_StartSound("pb/flashbang/explode",CHAN_7,CHANF_OVERLAP,0.95,0.65);
 				A_HDBlast(FLASHBANG_DIST,2,FLASHBANG_DIST/2,"bashing",8,8);
 				A_AlertMonsters(1024);
-				//A_Blast(0,255,4,90);
 			
 			for(int i=0;i<64;i++){
 			A_SpawnParticle("ff fe a8",
@@ -289,7 +289,11 @@ class HDFlashbangThrown:HDFragGrenade{
 							target=mob;
 							If(ccc.thing.FindState("Pain")
 							&&!mob.InStateSequence(mob.CurState,mob.ResolveState("falldown")))
-							mob.stunned+=FLASHBANG_STUNAMT;	
+							
+							{ccc.thing.SetStateLabel("Pain");}
+							
+							mob.stunned+=FLASHBANG_STUNAMT;
+							mob.target=null;
 							
 							//Extra Use Cases
 							If(ccc.thing is "PainMonster"||ccc.thing is "CombatSlug"||ccc.thing is "Technorantula")
