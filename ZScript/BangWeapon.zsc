@@ -214,6 +214,14 @@ class HDFlashbangPickup:HDFlashbangP{
 	}
 }
 
+class HDFlashbangPickup_Three:HDFlashbangP{
+	override void postbeginplay(){
+		super.postbeginplay();
+		A_SpawnItemEx("HDFlashbangP",frandom(-4,4),frandom(-4,4),flags:SXF_NOCHECKPOSITION);
+		A_SpawnItemEx("HDFlashbangP",-frandom(-4,4),frandom(-4,4),flags:SXF_NOCHECKPOSITION);
+	}
+}
+
 
 class HDFlashbangSpoon:HDDebris{
 	default{

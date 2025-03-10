@@ -98,7 +98,6 @@ class HDFlashbangRoller:HDFragGrenadeRoller{
 				A_HDBlast(FLASHBANG_DIST,2,FLASHBANG_DIST/2,"bashing",8,8);
 				A_AlertMonsters(1024);
 			
-			
 			for(int i=0;i<64;i++){
 			A_SpawnParticle("ff fe a8",
 				SPF_RELATIVE,frandom(3,5),frandom(4,7),0,
@@ -352,8 +351,8 @@ class HDFlashbangThrown:HDFragGrenade{
 							plr.stunned+=128;
 						}else
 						{
-							plr.A_SetBlend("00 00 00",0.3,32,"00 00 00",0);
-							plr.stunned+=8;
+							//plr.A_SetBlend("00 00 00",0.3,32,"00 00 00",0);
+							//plr.stunned+=8;
 						}
 					}
 				}
@@ -385,10 +384,11 @@ class HDFlashbangThrown:HDFragGrenade{
 
 class HDFlashbangLight:PointLightAdditive{
 	default{
-		stamina 512; //dist
+		stamina 624; //dist
 	}
 	override void postbeginplay(){
 		super.postbeginplay();
+		HDMobAI.Frighten(self,FLASHBANG_DIST);
 		args[0]=256;
 		args[1]=256;
 		args[2]=256;

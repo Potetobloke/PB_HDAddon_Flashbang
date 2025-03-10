@@ -16,11 +16,11 @@ override void CheckReplacement(ReplaceEvent e) {
 	//bonus items
 		case 'HelmFrag' :
 		case 'BlueFrag' :
-			if (!random(0, 24)) {e.Replacement = "HDFlashbangP";}	
+			if (!random(0, 20)) {e.Replacement = "HDFlashbangPickup_Three";}	
 			
 			break;
 	//mass spawn
-		case 'RocketBoxRandom' :
+		//case 'RocketBoxRandom' :
 		case 'BlurSphereReplacer' :
 			if (!random(0, 12)) {e.Replacement = "HDFlashbangPickup";}	
 			
